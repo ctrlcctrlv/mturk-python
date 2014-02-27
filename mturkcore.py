@@ -83,7 +83,7 @@ class MechanicalTurk(object):
 
 		self.flattened_parameters = self._flatten(request_parameters)
 
-		request = requests.get(self.service_url, params=self.flattened_parameters)
+		request = requests.post(self.service_url, params=self.flattened_parameters)
 		request.encoding = 'utf-8'
 		self.xml_response = request.text # Store XML response, might need it
 		self.response = xmltodict.parse(self.xml_response.encode('utf-8'))
