@@ -38,8 +38,8 @@ class MechanicalTurk(object):
 	def _generate_timestamp(self, gmtime):
 		return time.strftime("%Y-%m-%dT%H:%M:%SZ", gmtime)
 
-	def _generate_signature(self, service, operation, timestamp, secret_access_key):
-		my_sha_hmac = hmac.new(secret_access_key, service + operation + timestamp, hashlib.sha1)
+	def _generate_signature(self, operation, timestamp, secret_access_key):
+		my_sha_hmac = hmac.new(secret_access_key, 'AWSMechanicalTurkRequester' + operation + timestamp, hashlib.sha1)
 		my_b64_hmac_digest = base64.encodestring(my_sha_hmac.digest()).strip()
 		return my_b64_hmac_digest
 
@@ -76,7 +76,7 @@ class MechanicalTurk(object):
 			self.service_url='https://mechanicalturk.amazonaws.com/?Service=AWSMechanicalTurkRequester'
 		# create the operation signature
 		timestamp = self._generate_timestamp(time.gmtime())
-		signature = self._generate_signature('AWSMechanicalTurkRequester', operation, timestamp, self.aws_secret_key)
+		signature = self._generate_signature(operation, timestamp, self.aws_secret_key)
 
 	# Add common parameters to request dict
 		request_parameters.update({"Operation":operation,"Version":"2012-03-25","AWSAccessKeyId":self.aws_key,"Signature":signature,"Timestamp":timestamp})
