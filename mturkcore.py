@@ -44,12 +44,10 @@ class MechanicalTurk(object):
 		return my_b64_hmac_digest
 
 	def _flatten(self, obj, inner=False):
-		if isinstance(obj, basestring):
-			return {"": obj}
-		elif isinstance(obj, collections.Mapping):
+		if isinstance(obj, collections.Mapping):
 			if inner: obj.update({'':''})
 			iterable = obj.items()
-		elif isinstance(obj, collections.Iterable):
+		elif isinstance(obj, collections.Iterable) and not isinstance(obj, basestring):
 			iterable = enumerate(obj, start=1)
 		else:  
 			return {"": obj}
