@@ -8,10 +8,14 @@ mturk.py is a small library that sends requests to Mechanical Turk. It is much s
 Read the official mTurk API docs [here](http://docs.aws.amazon.com/AWSMechTurk/latest/AWSMturkAPI/Welcome.html).
 
 **Your configuration file, passed as a dict to MechanicalTurk or saved in mturkconfig.json**
+
+`stdout_log` enables the requests log of each request made to mTurk. `verify_mturk_ssl` verifies mTurk's SSL certificate. This should be left `true` in most cases, but according to bug reports it's broken on some operating systems.
+
 ```json
 {
 "use_sandbox" : false,
 "stdout_log" : false,
+"verify_mturk_ssl" : true,
 "aws_key" : "ACCESSID",
 "aws_secret_key" : "PASSWORD"
 }

@@ -28,8 +28,8 @@ class MechanicalTurk(object):
 		if not mturk_config_dict.get("stdout_log"):
 			logging.getLogger('requests').setLevel(logging.WARNING)
 
-		self.sandbox = mturk_config_dict.get("use_sandbox") # Use sandbox?
-
+		self.sandbox = mturk_config_dict.get("use_sandbox") == True # Use sandbox?
+		self.verify_mturk_ssl = mturk_config_dict.get("verify_mturk_ssl") == True
 		self.aws_key = mturk_config_dict["aws_key"]
 		self.aws_secret_key = str(mturk_config_dict["aws_secret_key"])
 
@@ -73,7 +73,7 @@ class MechanicalTurk(object):
 
 		self.flattened_parameters = self._flatten(request_parameters)
 
-		request = requests.post(self.service_url, params=self.flattened_parameters)
+		request = requests.post(self.service_url, params=self.flattened_parameters, verify=self.verify_mturk_ssl)
 		request.encoding = 'utf-8'
 		xml = request.text # Store XML response, might need it
 		response = xmltodict.parse(xml.encode('utf-8'), dict_constructor=dict)
