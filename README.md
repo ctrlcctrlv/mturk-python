@@ -8,12 +8,12 @@ mturk.py is a small library that sends requests to Mechanical Turk. It is much s
 Read the official mTurk API docs [here](http://docs.aws.amazon.com/AWSMechTurk/latest/AWSMturkAPI/Welcome.html).
 
 **Your configuration file, passed as a dict to MechanicalTurk or saved in mturkconfig.json**
-```python
+```json
 {
 "use_sandbox" : false,
 "stdout_log" : false,
 "aws_key" : "ACCESSID",
-"aws_secret_key" : "PASSWORD",
+"aws_secret_key" : "PASSWORD"
 }
 ```
 **Getting your balance**
