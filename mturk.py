@@ -75,7 +75,7 @@ class MechanicalTurk(object):
 		signature = self._generate_signature(operation, timestamp, self.aws_secret_key)
 
 		# Add common parameters to request dict
-		request_parameters.update({"Operation":operation,"Version":"2012-03-25","AWSAccessKeyId":self.aws_key,"Signature":signature,"Timestamp":timestamp})
+		request_parameters.update({"Operation":operation,"Version":"2013-11-15","AWSAccessKeyId":self.aws_key,"Signature":signature,"Timestamp":timestamp})
 
 		self.flattened_parameters = self._flatten(request_parameters)
 
