@@ -27,10 +27,17 @@ S_PHOTOMASTERS = "2TGBB6BFMFFOM08IBMAFGGESC1UWJX"
 PHOTOMASTERS = "21VZU98JHSTLZ5BPP4A9NOBJEK3DPG"
 
 class MechanicalTurk(object):
-	def __init__(self,mturk_config_dict=None):
-		"""Try to set config variables with a file called 'mturkconfig.json' if no argument is passed to the class instance. Else get our config from the argument passed."""
-		if mturk_config_dict is None:
-			mturk_config_dict = json.load(open("mturkconfig.json"))
+	def __init__(self, config_dict=None, config_file='mturkconfig.json'):
+		"""
+		Use mturk_config_file to set config dictionary.
+		Update the config dictionary with values from mturk_config_dict (if present).
+		"""
+		try:
+			mturk_config_dict = json.load(open(config_file))
+		except IOError:
+			mturk_config_dict = {}
+		if config_dict is not None:
+			mturk_config_dict.update(config_dict)
 		if not mturk_config_dict.get("stdout_log"):
 			logging.getLogger('requests').setLevel(logging.WARNING)
 
