@@ -59,7 +59,8 @@ class MechanicalTurk(object):
 		rv = {}
 		for key, value in iterable:
 			for inner_key, inner_value in self._flatten(value, inner=True).items():
-				rv.update({("{}.{}" if inner_key else "{}{}").format(key, inner_key): inner_value})
+				if inner_value != '':
+					rv.update({("{}.{}" if inner_key else "{}{}").format(key, inner_key): inner_value})
 		return rv
 
 	def request(self, operation, request_parameters={}):
@@ -75,15 +76,22 @@ class MechanicalTurk(object):
 		signature = self._generate_signature(operation, timestamp, self.aws_secret_key)
 
 		# Add common parameters to request dict
-		request_parameters.update({"Operation":operation,"Version":"2013-11-15","AWSAccessKeyId":self.aws_key,"Signature":signature,"Timestamp":timestamp})
+		request_parameters.update({"Operation":operation,"Version":"2014-08-15","AWSAccessKeyId":self.aws_key,"Signature":signature,"Timestamp":timestamp})
 
 		self.flattened_parameters = self._flatten(request_parameters)
 
-		request = requests.post(self.service_url, params=self.flattened_parameters, verify=self.verify_mturk_ssl)
+		request = requests.post(self.service_url, data=self.flattened_parameters, verify=self.verify_mturk_ssl)
 		request.encoding = 'utf-8'
 		xml = request.text # Store XML response, might need it
 		response = xmltodict.parse(xml.encode('utf-8'), dict_constructor=dict)
 		return MechanicalTurkResponse(response, xml=xml)
+	
+	def externalFormAction(self):
+		"""Return URL to use in the External question and HTML question form submit action."""
+		if self.sandbox:
+			return 'https://workersandbox.mturk.com/mturk/externalSubmit'
+		else:
+			return 'https://www.mturk.com/mturk/externalSubmit'
 
 class MechanicalTurkResponse(dict):
 	def __init__(self, response, xml=None):
