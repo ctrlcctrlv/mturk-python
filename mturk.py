@@ -45,8 +45,8 @@ class MechanicalTurk(object):
 		self.verify_mturk_ssl = mturk_config_dict.get("verify_mturk_ssl") == True
 		self.aws_key = mturk_config_dict["aws_key"]
 		self.aws_secret_key = str(mturk_config_dict["aws_secret_key"])
-		self.request_retry_timeout = 10
-		self.max_request_retries = 5
+		self.request_retry_timeout = mturk_config_dict.get("request_retry_timeout") or 10
+		self.max_request_retries = mturk_config_dict.get("max_request_retries") or 5
 
 	def _generate_timestamp(self, gmtime):
 		return time.strftime("%Y-%m-%dT%H:%M:%SZ", gmtime)
@@ -72,14 +72,6 @@ class MechanicalTurk(object):
 					rv.update({("{}.{}" if inner_key else "{}{}").format(key, inner_key): inner_value})
 		return rv
 
-	def set_request_retry_pause(self, pause):
-		"""Set time in seconds, after which the failed request will be retried."""
-		self.request_retry_timeout = pause
-
-	def set_max_request_retries(self, retries):
-		"""Set maximum number of failed request retries."""
-		self.max_request_retries = retries
-
 	def request(self, operation, request_parameters={}):
 		"""Create a Mechanical Turk client request. Unlike other libraries (thankfully), my help ends here. You can pass the operation (view the list here: http://docs.amazonwebservices.com/AWSMechTurk/latest/AWSMturkAPI/ApiReference_OperationsArticle.html) as parameter one, and a dictionary of arguments as parameter two. To send multiple of the same argument (for instance, multiple workers to notify in NotifyWorkers), you can send a list."""
 		if request_parameters is None:
@@ -100,12 +92,14 @@ class MechanicalTurk(object):
 		self.flattened_parameters = self._flatten(request_parameters)
 
 		# Retry request in case of ConnectionError
+		req_retry_timeout = self.request_retry_timeout
 		for i in xrange(self.max_request_retries):
 			try:
 				request = requests.post(self.service_url, params=self.flattened_parameters, verify=self.verify_mturk_ssl)
 			except requests.exceptions.ConnectionError as e:
 				last_requests_exception = e
-				time.sleep(self.request_retry_timeout)
+				time.sleep(req_retry_timeout)
+				req_retry_timeout *= 2
 				continue
 			break
 		else:
