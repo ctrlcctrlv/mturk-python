@@ -63,8 +63,10 @@ class MechanicalTurk(object):
 					rv.update({("{}.{}" if inner_key else "{}{}").format(key, inner_key): inner_value})
 		return rv
 
-	def request(self, operation, request_parameters={}):
+	def request(self, operation, request_parameters=None):
 		"""Create a Mechanical Turk client request. Unlike other libraries (thankfully), my help ends here. You can pass the operation (view the list here: http://docs.amazonwebservices.com/AWSMechTurk/latest/AWSMturkAPI/ApiReference_OperationsArticle.html) as parameter one, and a dictionary of arguments as parameter two. To send multiple of the same argument (for instance, multiple workers to notify in NotifyWorkers), you can send a list."""
+		if request_parameters is None:
+			request_parameters = {}
 		self.operation = operation
 
 		if self.sandbox:
