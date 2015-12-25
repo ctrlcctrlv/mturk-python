@@ -7,6 +7,11 @@ mturk.py is a small library that sends requests to Mechanical Turk. It is much s
 
 Read the official mTurk API docs [here](http://docs.aws.amazon.com/AWSMechTurk/latest/AWSMturkAPI/Welcome.html).
 
+**Installation**
+
+    pip install git+https://github.com/nmalkin/mturk-python.git
+
+
 **Configuration**
 
 The configuration settings can be passed as a dict to the `MechanicalTurk` constructor or saved in `mturkconfig.json` in the current working directory.
