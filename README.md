@@ -11,7 +11,7 @@ Read the official mTurk API docs [here](http://docs.aws.amazon.com/AWSMechTurk/l
 
 The library is compatible with both Python 2 and Python 3. You can install it using pip:
 
-    pip install git+https://github.com/nmalkin/mturk-python.git
+    pip install git+https://github.com/ctrlcctrlv/mturk-python.git
 
 
 **Configuration**
