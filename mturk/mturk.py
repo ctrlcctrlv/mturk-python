@@ -1,4 +1,5 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
+
 import time
 import hmac
 import hashlib
@@ -8,7 +9,9 @@ import requests
 import logging
 import xmltodict
 import collections
+import six
 from datetime import datetime
+from six.moves import range
 
 #Convenient flags for qualification types.
 P_SUBMITTED = "00000000000000000000"
@@ -27,10 +30,17 @@ S_PHOTOMASTERS = "2TGBB6BFMFFOM08IBMAFGGESC1UWJX"
 PHOTOMASTERS = "21VZU98JHSTLZ5BPP4A9NOBJEK3DPG"
 
 class MechanicalTurk(object):
-	def __init__(self,mturk_config_dict=None):
-		"""Try to set config variables with a file called 'mturkconfig.json' if no argument is passed to the class instance. Else get our config from the argument passed."""
-		if mturk_config_dict is None:
-			mturk_config_dict = json.load(open("mturkconfig.json"))
+	def __init__(self, config_dict=None, config_file='mturkconfig.json'):
+		"""
+		Use mturk_config_file to set config dictionary.
+		Update the config dictionary with values from mturk_config_dict (if present).
+		"""
+		try:
+			mturk_config_dict = json.load(open(config_file))
+		except IOError:
+			mturk_config_dict = {}
+		if config_dict is not None:
+			mturk_config_dict.update(config_dict)
 		if not mturk_config_dict.get("stdout_log"):
 			logging.getLogger('requests').setLevel(logging.WARNING)
 
@@ -38,22 +48,38 @@ class MechanicalTurk(object):
 		self.verify_mturk_ssl = mturk_config_dict.get("verify_mturk_ssl") == True
 		self.aws_key = mturk_config_dict["aws_key"]
 		self.aws_secret_key = str(mturk_config_dict["aws_secret_key"])
+		self.request_retry_timeout = mturk_config_dict.get("request_retry_timeout") or 10
+		self.max_request_retries = mturk_config_dict.get("max_request_retries") or 5
 
 	def _generate_timestamp(self, gmtime):
 		return time.strftime("%Y-%m-%dT%H:%M:%SZ", gmtime)
 
-	def _generate_signature(self, operation, timestamp, secret_access_key):
+	def _generate_signature_python2(self, operation, timestamp, secret_access_key):
 		my_sha_hmac = hmac.new(secret_access_key, 'AWSMechanicalTurkRequester' + operation + timestamp, hashlib.sha1)
 		my_b64_hmac_digest = base64.encodestring(my_sha_hmac.digest()).strip()
 		return my_b64_hmac_digest
+
+	def _generate_signature_python3(self, operation, timestamp, secret_access_key):
+		key = bytearray(secret_access_key, 'utf-8')
+		msg = bytearray('AWSMechanicalTurkRequester' + operation + timestamp, 'utf-8')
+		my_sha_hmac = hmac.new(key, msg, hashlib.sha1)
+		my_b64_hmac_digest = base64.encodestring(my_sha_hmac.digest()).strip()
+		return str(my_b64_hmac_digest, 'utf-8')
+
+	def _generate_signature(self, operation, timestamp, secret_access_key):
+		if six.PY2:
+			return self._generate_signature_python2(operation, timestamp, secret_access_key)
+		elif six.PY3:
+			return self._generate_signature_python3(operation, timestamp, secret_access_key)
+
 
 	def _flatten(self, obj, inner=False):
 		if isinstance(obj, collections.Mapping):
 			if inner: obj.update({'':''})
 			iterable = obj.items()
-		elif isinstance(obj, collections.Iterable) and not isinstance(obj, basestring):
+		elif isinstance(obj, collections.Iterable) and not isinstance(obj, six.string_types):
 			iterable = enumerate(obj, start=1)
-		else:  
+		else:
 			return {"": obj}
 
 		rv = {}
@@ -65,6 +91,8 @@ class MechanicalTurk(object):
 
 	def request(self, operation, request_parameters={}):
 		"""Create a Mechanical Turk client request. Unlike other libraries (thankfully), my help ends here. You can pass the operation (view the list here: http://docs.amazonwebservices.com/AWSMechTurk/latest/AWSMturkAPI/ApiReference_OperationsArticle.html) as parameter one, and a dictionary of arguments as parameter two. To send multiple of the same argument (for instance, multiple workers to notify in NotifyWorkers), you can send a list."""
+		if request_parameters is None:
+			request_parameters = {}
 		self.operation = operation
 
 		if self.sandbox:
@@ -80,7 +108,20 @@ class MechanicalTurk(object):
 
 		self.flattened_parameters = self._flatten(request_parameters)
 
-		request = requests.post(self.service_url, data=self.flattened_parameters, verify=self.verify_mturk_ssl)
+		# Retry request in case of ConnectionError
+		req_retry_timeout = self.request_retry_timeout
+		for i in range(self.max_request_retries):
+			try:
+				request = requests.post(self.service_url, params=self.flattened_parameters, verify=self.verify_mturk_ssl)
+			except requests.exceptions.ConnectionError as e:
+				last_requests_exception = e
+				time.sleep(req_retry_timeout)
+				req_retry_timeout *= 2
+				continue
+			break
+		else:
+			raise last_requests_exception
+
 		request.encoding = 'utf-8'
 		xml = request.text # Store XML response, might need it
 		response = xmltodict.parse(xml.encode('utf-8'), dict_constructor=dict)
@@ -110,4 +151,4 @@ class MechanicalTurkResponse(dict):
 					return item
 
 	def get_response_element(self, element):
-		return self._find_item(self.response, element)	
+		return self._find_item(self.response, element)
