@@ -127,7 +127,7 @@ class MechanicalTurk(object):
 		response = xmltodict.parse(xml.encode('utf-8'), dict_constructor=dict)
 		return MechanicalTurkResponse(response, xml=xml)
 	
-	def externalFormAction(self):
+	def external_form_action(self):
 		"""Return URL to use in the External question and HTML question form submit action."""
 		if self.sandbox:
 			return 'https://workersandbox.mturk.com/mturk/externalSubmit'
