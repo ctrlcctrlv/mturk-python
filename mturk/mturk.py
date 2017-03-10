@@ -56,7 +56,7 @@ class MechanicalTurk(object):
 
 	def _generate_signature_python2(self, operation, timestamp, secret_access_key):
 		my_sha_hmac = hmac.new(secret_access_key, 'AWSMechanicalTurkRequester' + operation + timestamp, hashlib.sha1)
-		my_b64_hmac_digest = base64.encodebytes(my_sha_hmac.digest()).strip()
+		my_b64_hmac_digest = base64.encodestring(my_sha_hmac.digest()).strip()
 		return my_b64_hmac_digest
 
 	def _generate_signature_python3(self, operation, timestamp, secret_access_key):
